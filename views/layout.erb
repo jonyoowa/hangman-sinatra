@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sinatra Hangman Example</title>
+    <link rel="stylesheet" type="text/css" href="./public/style.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Sinatra Hangman Example</h1>
+      <h2><%= session[:pattern] %></h2>
+  	  </br>
+
+      <%= yield %>
+
+  	  </br>
+      <p>Restart</p>
+    </div>
+  </body>
+</html>
