@@ -4,14 +4,14 @@
   <p>
     Your guesses:
     <br> 
-    <%= @try_string %>
+    <%= session[:guessed_letters] %>
   </p>
 <% else %>
   <br/><br/>
 <% end %>
 <p>
-  <form action='/' method='post'>
-    <input type='text' name='guess' pattern='[A-Za-z]{1}' title='Enter a letter.' autofocus required />
+  <form action='/try' method='post'>
+    <input type='text' name='guess' title='Enter a letter.' autofocus required />
     <input type='submit' value='Go' />
   </form>
 </p>

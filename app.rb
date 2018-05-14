@@ -1,16 +1,15 @@
 require 'sinatra'
+require 'sinatra/reloader' if development?
 
 enable :sessions
 
 @@wordlist = File.open("./public/5desk.txt").readlines
 
 get '/' do
-  p session	
-
-  if session[:game_over] || session[:answer].nil?
-  	redirect to '/new'
-  end
-
+  p "#{session[:answer]}"
+  redirect to '/new' if session[:game_over] || session[:answer].nil?
+  redirect to '/win' if won?
+  redirect to '/lose' if lost?
   erb :index
 end
 
@@ -20,24 +19,21 @@ get '/new' do
 end
 
 get '/lose' do
-  unless session[:game_over]
-  	redirect to '/'
-  end
   erb :lose
 end
 
 get '/win' do
-  unless session[:game_over]
-  	redirect to '/'
-  end
   erb :win
 end
 
-post '/' do
+post '/try' do
   guess = params['guess'].downcase
   p guess
   begin 
-  	check_if_valid(guess)
+  	check_no_response(guess)
+  	check_too_many_letters(guess)
+  	check_already_guessed(guess)
+  	check_not_a_letter(guess)
   rescue NoResponse
   	session[:error_message] = "Please enter a letter!"
   rescue TooManyLetters
@@ -47,6 +43,7 @@ post '/' do
   rescue NotALetter
   	session[:error_message] = "Your guess is not a letter!"
   else
+  	p "No errors!"
   	check_guess(guess)
   ensure
   	p session[:error_message]
@@ -57,17 +54,16 @@ end
 helpers do
   def set_vars
     session[:remaining_guesses] = 7
-	session[:guessed_letters] = Array.new
-	#session[:answer] = select_word
-	session[:answer] = "abcd" # For debugging 
- 	session[:pattern] = initialize_pattern
-	session[:game_over] = false
-	session[:error_message] = ""
+	  session[:guessed_letters] = Array.new
+	  session[:answer] = select_word
+	  #session[:answer] = "abcd" # For debugging 
+ 	  session[:pattern] = initialize_pattern
+	  session[:error_message] = ""
   end
 
   def select_word
     @choices = @@wordlist.select { |word| word.length.between?(7, 10) }
-    @selected_word = @choices.sample.downcase
+    @selected_word = @choices.sample.downcase.strip
   end
 
   def initialize_pattern
@@ -78,23 +74,30 @@ helpers do
 	@pattern
   end
 
-  def check_if_valid letter
-  	p "Entered check_if_valid"
+  def check_no_response letter
 	raise NoResponse if letter.to_s.empty? 
+  end
+
+  def check_too_many_letters letter
 	raise TooManyLetters if letter.length > 1 
+  end
+
+  def check_already_guessed letter
 	raise AlreadyGuessed if session[:guessed_letters].include?(letter) 
-	raise NotALetter unless letter =~ /[[:alpha]]/ 
+  end
+  	
+  def check_not_a_letter letter
+	raise NotALetter unless letter =~ /[A-Za-z]/
   end
 
   def check_guess letter
   	p "Entered check_guess"
   	if session[:answer].include?(letter) && !session[:guessed_letters].include?(letter)
-  	  session[:guessed_letters] << letter
   	  session[:pattern] = update_pattern(letter)
   	else
       session[:remaining_guesses] -= 1
-
   	end
+      session[:guessed_letters] << letter
   end
 
   def update_pattern letter
@@ -105,10 +108,12 @@ helpers do
   	  end
   	end
   	session[:pattern] = pattern_array.join(" ").strip
+  	p "#{session[:pattern_array]}"
+  	session[:pattern]
   end
 
   def won?
-
+  	!session[:pattern].split(" ").include?("_")
   end
 
   def lost?
