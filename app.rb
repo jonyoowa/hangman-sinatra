@@ -6,6 +6,7 @@ enable :sessions
 @@wordlist = File.open("./public/5desk.txt").readlines
 
 get '/' do
+  p "====== get /"
   p "#{session[:answer]}"
   redirect to '/new' if session[:game_over] || session[:answer].nil?
   redirect to '/win' if won?
@@ -14,19 +15,25 @@ get '/' do
 end
 
 get '/new' do
+  p "====== get /new"
   set_vars
   redirect to '/'
 end
 
 get '/lose' do
+  p "====== get /lose"
+  session[:game_over] = true
   erb :lose
 end
 
 get '/win' do
+  p "====== get /win"
+  session[:game_over] = true
   erb :win
 end
 
 post '/try' do
+  p "====== post /try"
   guess = params['guess'].downcase
   p guess
   begin 
@@ -51,17 +58,27 @@ post '/try' do
   end
 end
 
+configure do
+  set :public_folder, File.expand_path('../public', __FILE__)
+  set :views        , File.expand_path('../views', __FILE__)
+  set :root         , File.dirname(__FILE__)
+end
+
+
 helpers do
   def set_vars
-    session[:remaining_guesses] = 7
-	  session[:guessed_letters] = Array.new
-	  session[:answer] = select_word
-	  #session[:answer] = "abcd" # For debugging 
- 	  session[:pattern] = initialize_pattern
-	  session[:error_message] = ""
+   p ">>>>>> set_vars" 	
+    session[:remaining_guesses] = 3
+	session[:guessed_letters] = Array.new
+	#session[:answer] = select_word
+	session[:answer] = "abcd" # For debugging 
+ 	session[:pattern] = initialize_pattern
+	session[:error_message] = ""
+	session[:game_over] = false
   end
 
   def select_word
+  	p ">>>>>> select_word" 	
     @choices = @@wordlist.select { |word| word.length.between?(7, 10) }
     @selected_word = @choices.sample.downcase.strip
   end
@@ -113,10 +130,14 @@ helpers do
   end
 
   def won?
+  	p ">>>>>> won?" 	
+  	p "#{session[:pattern]}"
   	!session[:pattern].split(" ").include?("_")
   end
 
   def lost?
+  	p ">>>>>> lost?" 	
+  	p "#{session[:remaining_guesses]}"
     session[:remaining_guesses] == 0
   end
 end

@@ -1,2 +1,7 @@
 <h3>Sorry, you lost!</h3>
 <h2>The word was <%=session[:answer]%></h2>
+<div id='new_game'>
+	<form method="get", action='/new'>
+		<button name='new' value="true" type="submit">New Game</button>
+	</form>
+</div>
